@@ -196,7 +196,7 @@ exports.read = (req, res) => {
 
 exports.remove = (req, res) => {
   const slug = req.params.slug.toLowerCase();
-  Blog.findOneAndRemove({ slug }).exec((err, data) => {
+  Blog.findOneAndRemove({ slug }).exec((err) => {
     if (err) {
       return res.json({
         error: errorHandler(err),
@@ -281,5 +281,23 @@ exports.photo = (req, res) => {
       }
       res.set("Content-Type", blog.photo.contentType);
       return res.send(blog.photo.data);
+    });
+};
+
+exports.listRelated = (req, res) => {
+  let limit = req.body.limit ? parseInt(req.body.limit) : 3;
+  const { _id, categories } = req.body.blog;
+
+  Blog.find({ _id: { $ne: _id }, categories: { $in: categories } })
+    .limit(limit)
+    .populate("postedBy", "_id name profile")
+    .select("title slug excerpt postedBy createdAt updatedAt")
+    .exec((err, blogs) => {
+      if (err) {
+        return res.status(400).json({
+          error: "Blogs not found",
+        });
+      }
+      res.json(blogs);
     });
 };

@@ -9,10 +9,12 @@ const {
   remove,
   update,
   photo,
+  listRelated,
 } = require("../controllers/blog");
 
 router.post("/blog", requireSignin, adminMiddleware, create);
 router.post("/blogs-categories-tags", listAllBlogsCategoriesTags);
+router.post("/blogs/related", listRelated);
 
 router.get("/blogs", list);
 router.get("/blog/:slug", read);
