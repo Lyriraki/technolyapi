@@ -301,3 +301,28 @@ exports.listRelated = (req, res) => {
       res.json(blogs);
     });
 };
+
+exports.listSearch = (req, res) => {
+  const { search } = req.query;
+  if (search) {
+    Blog.find(
+      {
+        $or: [
+          { title: { $regex: search, $options: "i" } },
+          { body: { $regex: search, $options: "i" } },
+        ],
+      },
+      (err, blogs) => {
+        if (err) {
+          return res.status(400).json({
+            error: errorHandler(err),
+          });
+        }
+        res.json(blogs);
+      }
+    ).select("-photo -body");
+  }
+};
+
+// $or bawaan dari mongoose, jadi dia bisa mencari 'a' atau 'b'
+// $options 'i' => tidak case sensitive

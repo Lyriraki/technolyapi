@@ -10,6 +10,7 @@ const {
   update,
   photo,
   listRelated,
+  listSearch,
 } = require("../controllers/blog");
 
 router.post("/blog", requireSignin, adminMiddleware, create);
@@ -17,6 +18,7 @@ router.post("/blogs-categories-tags", listAllBlogsCategoriesTags);
 router.post("/blogs/related", listRelated);
 
 router.get("/blogs", list);
+router.get("/blogs/search", listSearch);
 router.get("/blog/:slug", read);
 router.get("/blog/photo/:slug", photo);
 
