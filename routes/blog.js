@@ -4,6 +4,7 @@ const {
   requireSignin,
   adminMiddleware,
   authMiddleware,
+  canUpdateDeleteBlog,
 } = require("../controllers/auth");
 const {
   create,
@@ -15,6 +16,7 @@ const {
   photo,
   listRelated,
   listSearch,
+  listByUser,
 } = require("../controllers/blog");
 
 // Admin
@@ -23,9 +25,22 @@ router.delete("/blog/:slug", requireSignin, adminMiddleware, remove);
 router.put("/blog/:slug", requireSignin, adminMiddleware, update);
 
 // User Login
+router.get("/:username/blogs", listByUser);
 router.post("/user/blog", requireSignin, authMiddleware, create);
-router.delete("/user/blog/:slug", requireSignin, authMiddleware, remove);
-router.put("/user/blog/:slug", requireSignin, authMiddleware, update);
+router.delete(
+  "/user/blog/:slug",
+  requireSignin,
+  authMiddleware,
+  canUpdateDeleteBlog,
+  remove
+);
+router.put(
+  "/user/blog/:slug",
+  requireSignin,
+  authMiddleware,
+  canUpdateDeleteBlog,
+  update
+);
 
 // User
 router.get("/blogs", list);

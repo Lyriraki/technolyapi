@@ -1,6 +1,7 @@
 const Blog = require("../models/blog");
 const Category = require("../models/category");
 const Tag = require("../models/tag");
+const User = require("../models/user");
 const formidable = require("formidable");
 const slugify = require("slugify");
 const stripHtml = require("string-strip-html");
@@ -111,6 +112,7 @@ exports.list = (req, res) => {
     .populate("categories", "_id name slug")
     .populate("tags", "_id name slug")
     .populate("postedBy", "_id name username")
+    .sort({ createdAt: -1 })
     .select(
       "_id title slug excerpt categories tags postedBy createdAt updatedAt"
     )
@@ -137,7 +139,7 @@ exports.listAllBlogsCategoriesTags = (req, res) => {
     .populate("categories", "_id name slug")
     .populate("tags", "_id name slug")
     .populate("postedBy", "_id name username profile")
-    .sort({ createAt: -1 })
+    .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
     .select(
@@ -322,6 +324,31 @@ exports.listSearch = (req, res) => {
       }
     ).select("-photo -body");
   }
+};
+
+exports.listByUser = (req, res) => {
+  User.findOne({ username: req.params.username }).exec((err, user) => {
+    if (err) {
+      return res.status(400).json({
+        error: errorHandler(err),
+      });
+    }
+    let userId = user._id;
+    Blog.find({ postedBy: userId })
+      .populate("categories", "_id name slug")
+      .populate("tags", "_id name slug")
+      .populate("postedBy", "_id name username")
+      .select("_id title slug postedBy createdAt updatedAt")
+      .sort({ createdAt: -1 })
+      .exec((err, data) => {
+        if (err) {
+          return res.status(400).json({
+            error: errorHandler(err),
+          });
+        }
+        res.json(data);
+      });
+  });
 };
 
 // $or bawaan dari mongoose, jadi dia bisa mencari 'a' atau 'b'
