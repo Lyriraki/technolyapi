@@ -8,41 +8,111 @@ const { errorHandler } = require("../helpers/dbErrorHandle");
 const nodeMailer = require("nodemailer");
 const { sendEmailWithNodemailer } = require("../helpers/email");
 
-exports.signup = (req, res) => {
-  // ! Buat Testing doang cuy
-  // const { name, email, password } = req.body;
-  // res.json({
-  //   user: { name, email, password },
-  // });
-  User.findOne({ email: req.body.email }).exec((err, user) => {
-    // * cek jika email sudah ada
+exports.preSignup = (req, res) => {
+  const { name, email, password } = req.body;
+  User.findOne({ email: email.toLowerCase() }, (err, user) => {
     if (user) {
       return res.status(400).json({
         error: "Email is taken",
       });
     }
+    const token = jwt.sign(
+      { name, email, password },
+      process.env.JWT_ACCOUNT_ACTIVATION,
+      {
+        expiresIn: "10m",
+      }
+    );
 
-    // * Jika email belum ada
-    const { name, email, password } = req.body;
-    let username = shortId.generate();
-    let profile = `${process.env.CLIENT_URL}/profile/${username}`; // ! untuk mengenerate nama profile sesuai url(SEO)
+    const emailData = {
+      from: process.env.EMAIL_FROM,
+      to: email,
+      subject: `Account activation link`,
+      html: `
+          <p>Please use the following link to activate your password:</p>
+          <p>${process.env.CLIENT_URL}/auth/account/activate/${token}</p>
+          <hr />
+          <p>This email may contain sensetive information</p>
+          <p>TechnoLy</p>
+      `,
+    };
 
-    let newUser = new User({ name, email, password, profile, username });
-    newUser.save((err, success) => {
-      if (err) {
-        return res.status(400).json({
-          error: err,
+    sendEmailWithNodemailer(req, res, emailData);
+  });
+};
+
+// exports.signup = (req, res) => {
+//   // ! Buat Testing doang cuy
+//   // const { name, email, password } = req.body;
+//   // res.json({
+//   //   user: { name, email, password },
+//   // });
+//   User.findOne({ email: req.body.email }).exec((err, user) => {
+//     // * cek jika email sudah ada
+//     if (user) {
+//       return res.status(400).json({
+//         error: "Email is taken",
+//       });
+//     }
+
+//     // * Jika email belum ada
+//     const { name, email, password } = req.body;
+//     let username = shortId.generate();
+//     let profile = `${process.env.CLIENT_URL}/profile/${username}`; // ! untuk mengenerate nama profile sesuai url(SEO)
+
+//     let newUser = new User({ name, email, password, profile, username });
+//     newUser.save((err, success) => {
+//       if (err) {
+//         return res.status(400).json({
+//           error: err,
+//         });
+//       }
+//       // ! Untuk cek hasil data benar atau tidak
+//       // res.json({
+//       //   user: success,
+//       // });
+//       res.json({
+//         message: "Signup success! Please signin",
+//       });
+//     });
+//   });
+// };
+
+exports.signup = (req, res) => {
+  const token = req.body.token;
+  if (token) {
+    jwt.verify(
+      token,
+      process.env.JWT_ACCOUNT_ACTIVATION,
+      function (err, decode) {
+        if (err) {
+          return res.status(401).json({
+            error: "Expired link. Signup again",
+          });
+        }
+        const { name, email, password } = jwt.decode(token);
+
+        let username = shortId.generate();
+        let profile = `${process.env.CLIENT_URL}/profile/${username}`;
+
+        const user = new User({ name, email, password, profile, username });
+        user.save((err, user) => {
+          if (err) {
+            return res.status(401).json({
+              error: errorHandler(err),
+            });
+          }
+          return res.json({
+            message: "Signup success! Please signin",
+          });
         });
       }
-      // ! Untuk cek hasil data benar atau tidak
-      // res.json({
-      //   user: success,
-      // });
-      res.json({
-        message: "Signup success! Please signin",
-      });
+    );
+  } else {
+    return res.json({
+      message: "Something went wrong. Try again",
     });
-  });
+  }
 };
 
 exports.signin = (req, res) => {
