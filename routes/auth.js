@@ -8,6 +8,7 @@ const {
   forgotPassword,
   resetPassword,
   preSignup,
+  googleLogin,
 } = require("../controllers/auth");
 
 // Validator
@@ -22,7 +23,7 @@ const {
 router.post("/signup", signup);
 router.post("/pre-signup", userSignupValidator, runValidation, preSignup);
 router.post("/signin", userSigninValidator, runValidation, signin);
-router.get("/signout", signout);
+router.post("/google-login", googleLogin);
 
 router.put(
   "/forgot-password",
@@ -37,6 +38,7 @@ router.put(
   resetPassword
 );
 
+router.get("/signout", signout);
 router.get("/secret", requireSignin, (req, res) => {
   res.json({
     message: "You have access to secret page",
